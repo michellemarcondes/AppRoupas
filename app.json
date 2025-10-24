@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "LojaDeRoupa",
+    "slug": "loja-de-roupa",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "lojaderoupa",
+    "userInterfaceStyle": "light", // Alterado para light
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E0F2FE" // Cor de fundo principal (sky-100)
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#E0F2FE" // Cor de fundo principal
+      },
+      "edgeToEdgeEnabled": true // Pode precisar ser false dependendo do layout com status bar clara
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
