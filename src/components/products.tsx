@@ -1,5 +1,4 @@
-// ADICIONADO: Importar React e ajustar forwardRef
-import React, { forwardRef, ReactNode, ComponentRef } from "react";
+import React, { forwardRef, ReactNode } from "react"; // React já estava importado
 import {
   TouchableOpacity,
   TouchableOpacityProps,
@@ -22,44 +21,49 @@ type ProductDataProps = {
 
 type ProductProps = TouchableOpacityProps & {
   data: ProductDataProps;
-  children?: ReactNode;
+  children?: ReactNode; // Children continua opcional
 };
 
-// Usando React.forwardRef explicitamente
 export const Product = forwardRef<TouchableOpacity, ProductProps>(
   ({ data, children, ...rest }, ref) => {
     return (
       <TouchableOpacity
         ref={ref}
-        className="w-full flex-row items-center pb-4"
+        className="w-full flex-row items-center pb-4" // Padding bottom para espaçamento na lista
         activeOpacity={0.7}
         {...rest}
       >
+        {/* Imagem */}
         <Image source={data.thumbnail} className="w-20 h-20 rounded-md" />
 
+        {/* Informações do Produto */}
         <View className="flex-1 ml-3">
+          {/* Linha do Título e Quantidade */}
           <View className="flex-row items-center">
-            <Text className="text-textoBase font-subtitle text-base flex-1">
+             {/* Título com limite de 1 linha e espaço à direita */}
+            <Text className="text-textoBase font-subtitle text-base flex-1 pr-2" numberOfLines={1} ellipsizeMode="tail">
               {data.title}
             </Text>
 
-            {data.quantity != null && data.quantity > 0 && ( // Verificação mais segura
-              <Text className="text-textoSuporte font-subtitle text-sm ml-2"> {/* Adicionado ml-2 */}
+            {/* Quantidade (se existir) */}
+            {data.quantity != null && data.quantity > 0 && (
+              <Text className="text-textoSuporte font-subtitle text-sm">
                 x {data.quantity}
               </Text>
             )}
           </View>
 
-          <Text className="text-textoSuporte text-xs leading-5 mt-0.5">
+          {/* Descrição com limite de 2 linhas */}
+          <Text className="text-textoSuporte text-xs leading-5 mt-0.5" numberOfLines={2} ellipsizeMode="tail">
             {data.description}
           </Text>
-          {/* Renderiza children (ex: detalhes cor/tamanho e botão remover no carrinho) */}
-          {children}
+
+          {/* Renderiza children DENTRO de uma View se eles existirem */}
+          {children && <View className="mt-1">{children}</View>}
         </View>
       </TouchableOpacity>
     );
   }
 );
 
-// Adiciona um displayName para debugging (opcional, mas recomendado com forwardRef)
-Product.displayName = "Product";
+Product.displayName = "Product"; // Mantém o displayName
