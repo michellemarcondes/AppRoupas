@@ -1,22 +1,26 @@
-import { View, Text, ScrollView, Alert, Linking, TouchableOpacity /* TextInput */ } from "react-native";
+import { View, Text, ScrollView, Alert, Linking, TouchableOpacity } from "react-native"; // Linking não será mais usado aqui, mas pode deixar
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+// REMOVIDO: import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
-// import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+// import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"; // Mantido removido
+// ADICIONADO: React para estado (se precisar de algo mais tarde)
+import React from "react";
 
 import { Header } from "@/components/header";
-import { Product } from "@/components/products"; // <<<--- RE-IMPORTAR/DESCOMENTAR
+import { Product } from "@/components/products";
 import { Button } from "@/components/button";
-import { Input } from "@/components/input"; // <<<--- Manter importado
+// REMOVIDO: import { Input } from "@/components/input";
 import { LinkButton } from "@/components/link-button";
 
 import { ProductCartProps, useCartStore } from "@/stores/cart-store";
 import { formatCurrency } from "@/utils/functions/format-currency";
 
-const PHONE_NUMBER = "5519988414402";
+// REMOVIDO: Constante PHONE_NUMBER não é mais necessária
+// const PHONE_NUMBER = "5519988414402";
 
 export default function Cart() {
-  const [address, setAddress] = useState(""); // Manter estado do endereço
+  // REMOVIDO: Estado 'address' não é mais necessário
+  // const [address, setAddress] = useState("");
   const cartStore = useCartStore();
   const router = useRouter();
 
@@ -28,8 +32,7 @@ export default function Cart() {
   );
 
   function handleProductRemove(product: ProductCartProps) {
-    // ... (lógica handleProductRemove) ...
-     Alert.alert("Remover", `Deseja remover ${product.title} (${product.size} / ${product.color}) do carrinho?`, [
+    Alert.alert("Remover", `Deseja remover ${product.title} (${product.size} / ${product.color}) do carrinho?`, [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Remover",
@@ -39,32 +42,34 @@ export default function Cart() {
     ]);
   }
 
+  // --- LÓGICA DE handleOrder ALTERADA ---
   function handleOrder() {
-    // ... (lógica handleOrder, ainda sem validação/uso de address) ...
-    const products = cartStore.products
-      .map((product) => `\n ${product.quantity}x ${product.title} (Cor: ${product.color}, Tam: ${product.size})`)
-      .join("");
-    const message = `
-    🛍️ NOVA COMPRA
-    ${/* Remover comentário quando Input voltar -> \n Entregar em: ${address} */''}
-    ${products}
-    \n Valor total: ${total}`;
-    Linking.openURL(
-      `http://api.whatsapp.com/send?phone=${PHONE_NUMBER}&text=${encodeURIComponent(message)}`
-    );
-    cartStore.clear();
-    router.back();
+    // Não precisa mais validar endereço
+    // Não precisa mais formatar mensagem para WhatsApp
+
+    // Exibe o alerta de confirmação
+    Alert.alert("Pedido Finalizado!", "Sua compra foi registrada com sucesso.", [
+      {
+        text: "OK",
+        onPress: () => {
+          // Ações a serem executadas APÓS o usuário pressionar OK
+          cartStore.clear(); // Limpa o carrinho
+          router.back();     // Volta para a tela anterior (provavelmente a inicial)
+        },
+      },
+    ]);
   }
+  // --- FIM DA ALTERAÇÃO ---
 
   return (
     <View className="flex-1 pt-8 bg-fundo">
       <Header title="Seu Carrinho" />
+      {/* Usando ScrollView normal */}
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View className="p-5 flex-1">
           {cartStore.products.length > 0 ? (
             <View>
               {cartStore.products.map((product) => (
-                // <<<--- RESTAURANDO O USO DO COMPONENTE PRODUCT E VIEW LATERAL
                 <View key={`${product.id}-${product.color}-${product.size}`} className="border-b border-cinza-200 py-4 flex-row">
                   <Product data={product} className="flex-1"/>
                   <View className="justify-center items-end pl-2 w-20">
@@ -75,7 +80,6 @@ export default function Cart() {
                     </TouchableOpacity>
                   </View>
                 </View>
-                // <<<--- FIM DA RESTAURAÇÃO
               ))}
             </View>
           ) : (
@@ -92,23 +96,14 @@ export default function Cart() {
             </Text>
           </View>
 
-          {/* INPUT AINDA COMENTADO */}
-          {/*
-          <Input
-            placeholder="Informe o endereço de entrega completo..."
-            onChangeText={setAddress}
-            onSubmitEditing={handleOrder}
-            blurOnSubmit={true}
-            returnKeyType="send"
-          />
-          */}
+          {/* REMOVIDO: Componente Input */}
 
         </View>
       </ScrollView>
 
       {/* Área inferior */}
       <View className="p-5 gap-5 border-t border-cinza-200 bg-cinza-100">
-         {/* Botão Finalizar ainda desabilitado baseado apenas no carrinho */}
+        {/* Botão Finalizar só depende do carrinho não estar vazio */}
         <Button onPress={handleOrder} disabled={cartStore.products.length === 0}>
           <Button.Text>Finalizar compra</Button.Text>
           <Button.Icon>
