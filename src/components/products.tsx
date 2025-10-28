@@ -1,27 +1,24 @@
-import React, { forwardRef, ReactNode } from "react"; // React já estava importado
+// src/components/products.tsx
+
+import React, { forwardRef, ReactNode } from "react";
 import {
   TouchableOpacity,
   TouchableOpacityProps,
-  ImageProps,
   Image,
   View,
   Text,
 } from "react-native";
+// Usar tipo do Backend diretamente ou um tipo específico se necessário
+import { ProductProps as BackendProductProps } from "@/utils/data/products";
 
-// Tipos definidos anteriormente...
-type ProductDataProps = {
-  title: string;
-  description: string;
-  thumbnail: ImageProps["source"];
-  quantity?: number;
-  price?: number;
-  color?: string;
-  size?: string;
+// Ajustar o tipo de dado esperado para incluir apenas o necessário para exibição na lista/carrinho
+type ProductDataForComponent = Pick<BackendProductProps, 'title' | 'description' | 'thumbnail_url'> & {
+    quantity?: number; // Quantidade é opcional e usada no carrinho
 };
 
 type ProductProps = TouchableOpacityProps & {
-  data: ProductDataProps;
-  children?: ReactNode; // Children continua opcional
+  data: ProductDataForComponent;
+  children?: ReactNode;
 };
 
 export const Product = forwardRef<TouchableOpacity, ProductProps>(
@@ -29,36 +26,40 @@ export const Product = forwardRef<TouchableOpacity, ProductProps>(
     return (
       <TouchableOpacity
         ref={ref}
-        className="w-full flex-row items-center pb-4" // Padding bottom para espaçamento na lista
+        className="w-full flex-row items-center pb-4" // Mantido padding bottom para espaçamento
         activeOpacity={0.7}
         {...rest}
       >
-        {/* Imagem */}
-        <Image source={data.thumbnail} className="w-20 h-20 rounded-md" />
+        {/* Usar a URL da thumbnail do backend */}
+        {data.thumbnail_url ? ( // Verifica se a URL existe
+            <Image
+                source={{ uri: data.thumbnail_url }} // Usa a URL
+                className="w-20 h-20 rounded-md bg-cinza-100" // Adiciona um fundo enquanto carrega
+                resizeMode="cover"
+            />
+        ) : (
+            // Placeholder se não houver imagem
+            <View className="w-20 h-20 rounded-md bg-cinza-200 items-center justify-center">
+                <Text className="text-textoSuporte text-xs">Sem Imagem</Text>
+            </View>
+        )}
 
-        {/* Informações do Produto */}
+
         <View className="flex-1 ml-3">
-          {/* Linha do Título e Quantidade */}
           <View className="flex-row items-center">
-             {/* Título com limite de 1 linha e espaço à direita */}
             <Text className="text-textoBase font-subtitle text-base flex-1 pr-2" numberOfLines={1} ellipsizeMode="tail">
               {data.title}
             </Text>
-
-            {/* Quantidade (se existir) */}
             {data.quantity != null && data.quantity > 0 && (
-              <Text className="text-textoSuporte font-subtitle text-sm">
+              <Text className="text-textoSuporte font-subtitle text-sm ml-2">
                 x {data.quantity}
               </Text>
             )}
           </View>
-
-          {/* Descrição com limite de 2 linhas */}
           <Text className="text-textoSuporte text-xs leading-5 mt-0.5" numberOfLines={2} ellipsizeMode="tail">
             {data.description}
           </Text>
-
-          {/* Renderiza children DENTRO de uma View se eles existirem */}
+          {/* Renderiza children (usado no carrinho) */}
           {children && <View className="mt-1">{children}</View>}
         </View>
       </TouchableOpacity>
@@ -66,4 +67,4 @@ export const Product = forwardRef<TouchableOpacity, ProductProps>(
   }
 );
 
-Product.displayName = "Product"; // Mantém o displayName
+Product.displayName = "Product";

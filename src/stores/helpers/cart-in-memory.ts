@@ -1,18 +1,23 @@
-import { ProductProps } from "@/utils/data/products";
+// src/stores/helpers/cart-in-memory.ts
+
+// Importar o tipo do Backend
+import { ProductProps as BackendProductProps } from "@/utils/data/products";
+// Importar o tipo do Carrinho
 import { ProductCartProps } from "../cart-store";
 
+// Função add ajustada para receber BackendProductProps
 export function add(
   products: ProductCartProps[],
-  newProduct: ProductProps,
+  newProduct: BackendProductProps, // Recebe tipo do Backend
   size: string,
   color: string
 ): ProductCartProps[] {
-  // Procura por um produto que tenha o mesmo ID, a mesma COR e o mesmo TAMANHO.
+  // Procura usando _id do backend, mas comparando com o 'id' que armazenamos no carrinho
   const existingProduct = products.find(
-    (p) => p.id === newProduct.id && p.size === size && p.color === color
+    (p) => p.id === newProduct._id && p.size === size && p.color === color
   );
 
-  // Se a variação específica já existe no carrinho, apenas aumenta a quantidade.
+  // Se a variação específica já existe, incrementa a quantidade
   if (existingProduct) {
     return products.map((product) =>
       product.id === existingProduct.id && product.size === size && product.color === color
@@ -21,31 +26,26 @@ export function add(
     );
   }
 
-  // Se a variação não existe, adiciona o novo item com os detalhes da variação.
-  return [...products, { ...newProduct, size, color, quantity: 1 }];
+  // Se não existe, adiciona o novo item, mapeando _id para id e incluindo size/color
+  return [...products, { ...newProduct, id: newProduct._id, size, color, quantity: 1 }];
 }
 
+// Função remove permanece a mesma, comparando pelo 'id' interno (que veio do _id)
 export function remove(
   products: ProductCartProps[],
   productIdToRemove: string,
   size: string,
   color: string
 ): ProductCartProps[] {
-  
-  // Percorre os produtos para encontrar a variação exata a ser alterada.
   const updatedProducts = products.map((product) => {
-      // Se encontrar o item com ID, tamanho e cor correspondentes...
-      if(product.id === productIdToRemove && product.size === size && product.color === color) {
-        // ...diminui a quantidade em 1.
-        return {
-          ...product,
-          quantity: product.quantity - 1
-        }
+    if (product.id === productIdToRemove && product.size === size && product.color === color) {
+      return {
+        ...product,
+        quantity: product.quantity - 1
       }
-      return product;
     }
-  );
-
-  // Filtra a lista para remover permanentemente qualquer item cuja quantidade chegou a 0.
+    return product;
+  });
+  // Filtra itens com quantidade 0
   return updatedProducts.filter((product) => product.quantity > 0);
 }

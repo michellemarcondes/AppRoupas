@@ -1,29 +1,30 @@
-import { View, Text, ScrollView, Alert, Linking, TouchableOpacity } from "react-native"; // Linking não será mais usado aqui, mas pode deixar
+// src/app/cart.tsx
+
+import { View, Text, ScrollView, Alert, Linking, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-// REMOVIDO: import { useState } from "react";
+import React, { useState, useCallback } from "react"; // Adicionado useCallback
 import { Feather } from "@expo/vector-icons";
-// import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"; // Mantido removido
-// ADICIONADO: React para estado (se precisar de algo mais tarde)
-import React from "react";
+import { useFocusEffect } from "expo-router"; // Importar useFocusEffect
 
 import { Header } from "@/components/header";
 import { Product } from "@/components/products";
 import { Button } from "@/components/button";
-// REMOVIDO: import { Input } from "@/components/input";
 import { LinkButton } from "@/components/link-button";
+import { CheckoutForm, CheckoutFormData } from "@/components/CheckoutForm"; // Importar Form e Tipo
 
 import { ProductCartProps, useCartStore } from "@/stores/cart-store";
 import { formatCurrency } from "@/utils/functions/format-currency";
-
-// REMOVIDO: Constante PHONE_NUMBER não é mais necessária
-// const PHONE_NUMBER = "5519988414402";
+import axios from 'axios';
+import { API_BASE_URL } from "@/utils/apiConfig";
 
 export default function Cart() {
-  // REMOVIDO: Estado 'address' não é mais necessário
-  // const [address, setAddress] = useState("");
   const cartStore = useCartStore();
   const router = useRouter();
+  const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Estado de erro para submit
 
+  // Recalcular total sempre que o carrinho mudar
   const total = formatCurrency(
     cartStore.products.reduce(
       (total, product) => total + product.price * product.quantity,
@@ -32,7 +33,7 @@ export default function Cart() {
   );
 
   function handleProductRemove(product: ProductCartProps) {
-    Alert.alert("Remover", `Deseja remover ${product.title} (${product.size} / ${product.color}) do carrinho?`, [
+     Alert.alert("Remover", `Deseja remover ${product.title} (${product.size} / ${product.color}) do carrinho?`, [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Remover",
@@ -42,31 +43,87 @@ export default function Cart() {
     ]);
   }
 
-  // --- LÓGICA DE handleOrder ALTERADA ---
-  function handleOrder() {
-    // Não precisa mais validar endereço
-    // Não precisa mais formatar mensagem para WhatsApp
-
-    // Exibe o alerta de confirmação
-    Alert.alert("Pedido Finalizado!", "Sua compra foi registrada com sucesso.", [
-      {
-        text: "OK",
-        onPress: () => {
-          // Ações a serem executadas APÓS o usuário pressionar OK
-          cartStore.clear(); // Limpa o carrinho
-          router.back();     // Volta para a tela anterior (provavelmente a inicial)
-        },
-      },
-    ]);
+  // Abre o modal de checkout
+  function handleCheckout() {
+    setError(null); // Limpa erros anteriores ao abrir o modal
+    setIsCheckoutVisible(true);
   }
-  // --- FIM DA ALTERAÇÃO ---
+
+  // Função para submeter o pedido via API
+  const submitOrder = useCallback(async (formData: CheckoutFormData) => {
+    setIsSubmittingOrder(true);
+    setError(null);
+
+    try {
+      const orderItems = cartStore.products.map(item => ({
+        productId: item.id,
+        color: item.color,
+        size: item.size,
+        quantity: item.quantity,
+      }));
+
+      const payload = {
+        ...formData,
+        items: orderItems,
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/orders`, payload);
+
+      if (response.status === 201) {
+          setIsCheckoutVisible(false); // Fecha modal no SUCESSO
+          Alert.alert("Pedido Finalizado!", "Sua compra foi registrada com sucesso.", [
+            {
+                text: "OK",
+                onPress: () => {
+                cartStore.clear();
+                router.replace('/'); // Usar replace para não poder voltar para o carrinho vazio
+                },
+            },
+          ]);
+      } else {
+          throw new Error(`Status inesperado: ${response.status}`);
+      }
+
+    } catch (error: any) {
+      console.error("Erro ao finalizar pedido (cart.tsx):", error.response?.data || error.message);
+      let errorMessage = "Não foi possível finalizar o pedido. Verifique os dados ou tente novamente mais tarde.";
+      if (axios.isAxiosError(error) && error.response?.data?.details) {
+          const fieldErrors = error.response.data.details;
+          const firstFieldName = Object.keys(fieldErrors)[0];
+          if (firstFieldName && fieldErrors[firstFieldName] && fieldErrors[firstFieldName].length > 0) {
+              // Mapear nomes de campos do backend para nomes amigáveis (opcional)
+              const fieldNameMap: { [key: string]: string } = {
+                  customerName: 'Nome Completo',
+                  customerCpf: 'CPF',
+                  customerPhone: 'Telefone',
+                  customerCep: 'CEP',
+                  items: 'Itens do Carrinho'
+              };
+              const friendlyFieldName = fieldNameMap[firstFieldName] || firstFieldName;
+              errorMessage = `Erro no campo ${friendlyFieldName}: ${fieldErrors[firstFieldName][0]}`;
+          } else if (error.response.data.error) {
+              errorMessage = error.response.data.error;
+          }
+      } else if (axios.isAxiosError(error) && error.response?.data?.error) {
+         errorMessage = error.response.data.error; // Captura erros genéricos do backend
+      }
+      setError(errorMessage); // Guarda a mensagem de erro
+      Alert.alert("Erro no Pedido", errorMessage); // Mostra o alerta
+      // Não fecha o modal no erro, para o usuário corrigir
+      throw error; // Re-lança o erro para o catch no CheckoutForm (opcional)
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  }, [cartStore, router]); // Dependências do useCallback
+
 
   return (
     <View className="flex-1 pt-8 bg-fundo">
       <Header title="Seu Carrinho" />
-      {/* Usando ScrollView normal */}
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      {/* ScrollView principal */}
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View className="p-5 flex-1">
+          {/* Lista de Produtos */}
           {cartStore.products.length > 0 ? (
             <View>
               {cartStore.products.map((product) => (
@@ -95,16 +152,12 @@ export default function Cart() {
               {total}
             </Text>
           </View>
-
-          {/* REMOVIDO: Componente Input */}
-
         </View>
       </ScrollView>
 
-      {/* Área inferior */}
+      {/* Área inferior fixa */}
       <View className="p-5 gap-5 border-t border-cinza-200 bg-cinza-100">
-        {/* Botão Finalizar só depende do carrinho não estar vazio */}
-        <Button onPress={handleOrder} disabled={cartStore.products.length === 0}>
+        <Button onPress={handleCheckout} disabled={cartStore.products.length === 0}>
           <Button.Text>Finalizar compra</Button.Text>
           <Button.Icon>
             <Feather name="arrow-right-circle" size={20} />
@@ -112,6 +165,14 @@ export default function Cart() {
         </Button>
         <LinkButton title="Continuar comprando" href={"/"} />
       </View>
+
+      {/* Modal do Formulário */}
+      <CheckoutForm
+          isVisible={isCheckoutVisible}
+          onClose={() => setIsCheckoutVisible(false)} // Simplesmente fecha ao clicar fora ou no X
+          onSubmit={submitOrder} // Passa a função de submit
+          isSubmitting={isSubmittingOrder} // Passa o estado de loading
+      />
     </View>
   );
 }
