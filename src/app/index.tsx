@@ -1,5 +1,5 @@
 // src/app/index.tsx
-
+import { TouchableOpacity } from 'react-native';
 import { View, Text, FlatList, SectionList, ActivityIndicator } from "react-native";
 import { Header } from "@/components/header";
 import { CategoryButton } from "@/components/category-button";
