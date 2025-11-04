@@ -1,4 +1,5 @@
 // src/app/product/[id].tsx
+// CÓDIGO CORRIGIDO
 
 import React, { useState, useEffect } from "react";
 import { Image, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from "react-native";
@@ -33,9 +34,9 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id || typeof id !== 'string' || !/^[0-9a-fA-F]{24}$/.test(id)) { // Validar formato ObjectId
-          setError("ID do produto inválido.");
-          setIsLoading(false);
-          return;
+        setError("ID do produto inválido.");
+        setIsLoading(false);
+        return;
       }
       setIsLoading(true);
       setError(null);
@@ -45,21 +46,21 @@ export default function ProductDetail() {
 
         // Inicializar seleção
         if (response.data?.variations && response.data.variations.length > 0) {
-            const firstVariation = response.data.variations[0];
-            setSelectedColor(firstVariation.color ?? ""); // Usar string vazia se color for null/undefined
-            if (firstVariation.sizes && firstVariation.sizes.length > 0) {
-                const availableSize = firstVariation.sizes.find(s => s.stock > 0);
-                setSelectedSize(availableSize || firstVariation.sizes[0]);
-            } else {
-                 setSelectedSize(null);
-            }
+          const firstVariation = response.data.variations[0];
+          setSelectedColor(firstVariation.color ?? ""); // Usar string vazia se color for null/undefined
+          if (firstVariation.sizes && firstVariation.sizes.length > 0) {
+            const availableSize = firstVariation.sizes.find(s => s.stock > 0);
+            setSelectedSize(availableSize || firstVariation.sizes[0]);
+          } else {
+            setSelectedSize(null);
+          }
         }
       } catch (err: any) {
         console.error("Erro ao buscar produto:", err);
         if (axios.isAxiosError(err) && err.response?.status === 404) {
-             setError("Produto não encontrado.");
+          setError("Produto não encontrado.");
         } else {
-            setError("Não foi possível carregar os detalhes do produto.");
+          setError("Não foi possível carregar os detalhes do produto.");
         }
       } finally {
         setIsLoading(false);
@@ -70,29 +71,29 @@ export default function ProductDetail() {
   }, [id]);
 
   function handleColorSelect(color: string) {
-     if (!product) return;
+    if (!product) return;
     setSelectedColor(color);
     const variation = product.variations.find(v => v.color === color);
     if (variation?.sizes && variation.sizes.length > 0) {
-        const availableSize = variation.sizes.find(s => s.stock > 0);
-        setSelectedSize(availableSize || variation.sizes[0]);
+      const availableSize = variation.sizes.find(s => s.stock > 0);
+      setSelectedSize(availableSize || variation.sizes[0]);
     } else {
-        setSelectedSize(null); // Resetar se a nova cor não tiver tamanhos
+      setSelectedSize(null); // Resetar se a nova cor não tiver tamanhos
     }
   }
 
   function handleAddToCart() {
     if (!product) return;
-     if (product.variations.some(v => v.color) && !selectedColor) {
-         return Alert.alert("Ops!", "Selecione uma cor para continuar.");
+    if (product.variations.some(v => v.color) && !selectedColor) {
+      return Alert.alert("Ops!", "Selecione uma cor para continuar.");
     }
     const currentVariation = product.variations.find(v => v.color === selectedColor);
     // Ajuste: Só valida tamanho se a variação *deveria* ter tamanhos
     if (currentVariation?.sizes && currentVariation.sizes.length > 0 && !selectedSize) {
-         return Alert.alert("Ops!", "Selecione um tamanho para continuar.");
+      return Alert.alert("Ops!", "Selecione um tamanho para continuar.");
     }
-     if (selectedSize && selectedSize.stock === 0) {
-        return Alert.alert("Ops!", "Este tamanho está fora de estoque.");
+    if (selectedSize && selectedSize.stock === 0) {
+      return Alert.alert("Ops!", "Este tamanho está fora de estoque.");
     }
 
     const sizeToAdd = selectedSize ? selectedSize.size : "Único"; // Default para itens sem tamanho
@@ -114,12 +115,12 @@ export default function ProductDetail() {
   }
 
   if (error) {
-     return (
-       <View className="flex-1 bg-fundo items-center justify-center p-5">
-         <Text className="text-red-500 text-center mb-4">{error}</Text>
-          <LinkButton title="Voltar para Início" href="/" />
-       </View>
-     );
+    return (
+      <View className="flex-1 bg-fundo items-center justify-center p-5">
+        <Text className="text-red-500 text-center mb-4">{error}</Text>
+        <LinkButton title="Voltar para Início" href="/" />
+      </View>
+    );
   }
 
   if (!product) {
@@ -143,18 +144,18 @@ export default function ProductDetail() {
       />
       {/* Miniaturas (se houver mais de uma imagem) */}
       {product.image_urls.length > 1 && (
-         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-none py-2 px-5 bg-cinza-100 border-b border-cinza-200">
-             {product.image_urls.map((url, index) => (
-                 <TouchableOpacity
-                    key={url}
-                    className={`w-16 h-16 rounded mr-2 border-2 ${index === selectedImageIndex ? 'border-azul' : 'border-transparent'}`}
-                    onPress={() => setSelectedImageIndex(index)}
-                    activeOpacity={0.8}
-                 >
-                     <Image source={{ uri: url }} className="w-full h-full rounded" resizeMode="cover" />
-                 </TouchableOpacity>
-             ))}
-         </ScrollView>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-none py-2 px-5 bg-cinza-100 border-b border-cinza-200">
+          {product.image_urls.map((url, index) => (
+            <TouchableOpacity
+              key={url}
+              className={`w-16 h-16 rounded mr-2 border-2 ${index === selectedImageIndex ? 'border-azul' : 'border-transparent'}`}
+              onPress={() => setSelectedImageIndex(index)}
+              activeOpacity={0.8}
+            >
+              <Image source={{ uri: url }} className="w-full h-full rounded" resizeMode="cover" />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       )}
 
 
@@ -167,9 +168,8 @@ export default function ProductDetail() {
           <Text className="text-textoSuporte font-body text-base leading-6 mb-6">
             {product.description}
           </Text>
-
           {/* Seletor de Cores */}
-           {product.variations && product.variations.length > 0 && product.variations.some(v => v.color) && (
+          {product.variations && product.variations.length > 0 && product.variations.some(v => v.color) && (
             <>
               <Text className="text-textoBase font-heading text-lg mb-2">Cor</Text>
               <View className="flex-row gap-2 flex-wrap mb-4">
@@ -186,8 +186,7 @@ export default function ProductDetail() {
                 ))}
               </View>
             </>
-           )}
-
+          )}
           {/* Seletor de Tamanhos */}
           {selectedColorData?.sizes && selectedColorData.sizes.length > 0 && (
             <View className="mt-4">
@@ -203,9 +202,9 @@ export default function ProductDetail() {
                     } ${size.stock === 0 ? "opacity-60 bg-cinza-100" : ""}`}
                   >
                     <Text className={selectedSize?.size === size.size ? "text-azul-dark font-bold" : (size.stock === 0 ? "text-textoSuporte" : "text-textoBase")}>{size.size}</Text>
-                     {size.stock === 0 && (
-                       <Text className="text-xs text-red-600">(Esgotado)</Text>
-                     )}
+                    {size.stock === 0 && (
+                      <Text className="text-xs text-red-600">(Esgotado)</Text>
+                    )}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -218,16 +217,13 @@ export default function ProductDetail() {
       {/* Área do botão */}
       <View className="p-5 pb-8 gap-5 border-t border-cinza-200 bg-cinza-100">
         <Button onPress={handleAddToCart} disabled={isOutOfStock}>
-           <Button.Icon>
-             <Feather name="shopping-cart" size={20} />
-           </Button.Icon>
-           <Button.Text>{isOutOfStock ? "Fora de Estoque" : "Adicionar ao carrinho"}</Button.Text>
+          <Button.Icon>
+            <Feather name="shopping-cart" size={20} />
+          </Button.Icon>
+          <Button.Text>{isOutOfStock ? "Fora de Estoque" : "Adicionar ao carrinho"}</Button.Text>
         </Button>
         <LinkButton title="Continuar comprando" href={"/"} />
       </View>
     </View>
   );
 }
-
-// Estilos adicionais, se necessário (ex: para galeria)
-// const styles = StyleSheet.create({ ... });
